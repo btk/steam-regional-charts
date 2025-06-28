@@ -1,22 +1,74 @@
 import * as cheerio from 'cheerio';
 
-// Steam region mapping
+// Steam region mapping - Comprehensive list of Steam-supported regions
 const STEAM_REGIONS = {
+  // North America
   us: { code: 'us', name: 'United States', currency: '$', flag: '🇺🇸' },
-  uk: { code: 'uk', name: 'United Kingdom', currency: '£', flag: '🇬🇧' },
   ca: { code: 'ca', name: 'Canada', currency: 'CDN$', flag: '🇨🇦' },
-  au: { code: 'au', name: 'Australia', currency: 'AUD', flag: '🇦🇺' },
+  mx: { code: 'mx', name: 'Mexico', currency: 'Mex$', flag: '🇲🇽' },
+  
+  // Europe
+  uk: { code: 'uk', name: 'United Kingdom', currency: '£', flag: '🇬🇧' },
   de: { code: 'de', name: 'Germany', currency: '€', flag: '🇩🇪' },
   fr: { code: 'fr', name: 'France', currency: '€', flag: '🇫🇷' },
-  jp: { code: 'jp', name: 'Japan', currency: '¥', flag: '🇯🇵' },
+  it: { code: 'it', name: 'Italy', currency: '€', flag: '🇮🇹' },
+  es: { code: 'es', name: 'Spain', currency: '€', flag: '🇪🇸' },
+  nl: { code: 'nl', name: 'Netherlands', currency: '€', flag: '🇳🇱' },
+  pl: { code: 'pl', name: 'Poland', currency: 'zł', flag: '🇵🇱' },
   ru: { code: 'ru', name: 'Russia', currency: 'pуб', flag: '🇷🇺' },
-  br: { code: 'br', name: 'Brazil', currency: 'R$', flag: '🇧🇷' },
-  cn: { code: 'cn', name: 'China', currency: '¥', flag: '🇨🇳' },
-  kr: { code: 'kr', name: 'South Korea', currency: '₩', flag: '🇰🇷' },
-  in: { code: 'in', name: 'India', currency: '₹', flag: '🇮🇳' },
-  mx: { code: 'mx', name: 'Mexico', currency: 'Mex$', flag: '🇲🇽' },
   tr: { code: 'tr', name: 'Turkey', currency: '₺', flag: '🇹🇷' },
-  th: { code: 'th', name: 'Thailand', currency: '฿', flag: '🇹🇭' }
+  se: { code: 'se', name: 'Sweden', currency: 'kr', flag: '🇸🇪' },
+  no: { code: 'no', name: 'Norway', currency: 'kr', flag: '🇳🇴' },
+  dk: { code: 'dk', name: 'Denmark', currency: 'kr', flag: '🇩🇰' },
+  fi: { code: 'fi', name: 'Finland', currency: '€', flag: '🇫🇮' },
+  ch: { code: 'ch', name: 'Switzerland', currency: 'CHF', flag: '🇨🇭' },
+  at: { code: 'at', name: 'Austria', currency: '€', flag: '🇦🇹' },
+  be: { code: 'be', name: 'Belgium', currency: '€', flag: '🇧🇪' },
+  pt: { code: 'pt', name: 'Portugal', currency: '€', flag: '🇵🇹' },
+  gr: { code: 'gr', name: 'Greece', currency: '€', flag: '🇬🇷' },
+  cz: { code: 'cz', name: 'Czech Republic', currency: 'Kč', flag: '🇨🇿' },
+  hu: { code: 'hu', name: 'Hungary', currency: 'Ft', flag: '🇭🇺' },
+  ro: { code: 'ro', name: 'Romania', currency: 'lei', flag: '🇷🇴' },
+  bg: { code: 'bg', name: 'Bulgaria', currency: 'лв', flag: '🇧🇬' },
+  hr: { code: 'hr', name: 'Croatia', currency: 'kn', flag: '🇭🇷' },
+  sk: { code: 'sk', name: 'Slovakia', currency: '€', flag: '🇸🇰' },
+  si: { code: 'si', name: 'Slovenia', currency: '€', flag: '🇸🇮' },
+  lt: { code: 'lt', name: 'Lithuania', currency: '€', flag: '🇱🇹' },
+  lv: { code: 'lv', name: 'Latvia', currency: '€', flag: '🇱🇻' },
+  ee: { code: 'ee', name: 'Estonia', currency: '€', flag: '🇪🇪' },
+  ua: { code: 'ua', name: 'Ukraine', currency: '₴', flag: '🇺🇦' },
+  
+  // Asia-Pacific
+  jp: { code: 'jp', name: 'Japan', currency: '¥', flag: '🇯🇵' },
+  kr: { code: 'kr', name: 'South Korea', currency: '₩', flag: '🇰🇷' },
+  cn: { code: 'cn', name: 'China', currency: '¥', flag: '🇨🇳' },
+  hk: { code: 'hk', name: 'Hong Kong', currency: 'HK$', flag: '🇭🇰' },
+  tw: { code: 'tw', name: 'Taiwan', currency: 'NT$', flag: '🇹🇼' },
+  sg: { code: 'sg', name: 'Singapore', currency: 'S$', flag: '🇸🇬' },
+  my: { code: 'my', name: 'Malaysia', currency: 'RM', flag: '🇲🇾' },
+  th: { code: 'th', name: 'Thailand', currency: '฿', flag: '🇹🇭' },
+  id: { code: 'id', name: 'Indonesia', currency: 'Rp', flag: '🇮🇩' },
+  ph: { code: 'ph', name: 'Philippines', currency: '₱', flag: '🇵🇭' },
+  vn: { code: 'vn', name: 'Vietnam', currency: '₫', flag: '🇻🇳' },
+  in: { code: 'in', name: 'India', currency: '₹', flag: '🇮🇳' },
+  au: { code: 'au', name: 'Australia', currency: 'AUD', flag: '🇦🇺' },
+  nz: { code: 'nz', name: 'New Zealand', currency: 'NZ$', flag: '🇳🇿' },
+  
+  // South America
+  br: { code: 'br', name: 'Brazil', currency: 'R$', flag: '🇧🇷' },
+  ar: { code: 'ar', name: 'Argentina', currency: 'ARS$', flag: '🇦🇷' },
+  cl: { code: 'cl', name: 'Chile', currency: 'CLP$', flag: '🇨🇱' },
+  co: { code: 'co', name: 'Colombia', currency: 'COL$', flag: '🇨🇴' },
+  pe: { code: 'pe', name: 'Peru', currency: 'S/', flag: '🇵🇪' },
+  uy: { code: 'uy', name: 'Uruguay', currency: '$U', flag: '🇺🇾' },
+  
+  // Middle East & Africa
+  il: { code: 'il', name: 'Israel', currency: '₪', flag: '🇮🇱' },
+  ae: { code: 'ae', name: 'UAE', currency: 'د.إ', flag: '🇦🇪' },
+  sa: { code: 'sa', name: 'Saudi Arabia', currency: 'SR', flag: '🇸🇦' },
+  kw: { code: 'kw', name: 'Kuwait', currency: 'KD', flag: '🇰🇼' },
+  qa: { code: 'qa', name: 'Qatar', currency: 'QR', flag: '🇶🇦' },
+  za: { code: 'za', name: 'South Africa', currency: 'R', flag: '🇿🇦' }
 };
 
 export default async function handler(req, res) {

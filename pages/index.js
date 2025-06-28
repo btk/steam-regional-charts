@@ -65,13 +65,13 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              🎮 Steam Regional Charts
+              🎮 Steam Global Charts
             </h1>
             <p className="text-gray-600 text-sm mb-3">
-              Top 10 Popular New & Trending Games
+              Top 30 Popular New & Trending Games • 55+ Countries Available
               {regionInfo && (
                 <span className="ml-2 inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800">
-                  {regionInfo.name} ({regionInfo.currency})
+                  {regionInfo.flag} {regionInfo.name} ({regionInfo.currency})
                 </span>
               )}
             </p>
@@ -88,7 +88,7 @@ export default function Home() {
                 >
                   {availableRegions.map((region) => (
                     <option key={region.code} value={region.code}>
-                      {region.name} ({region.currency})
+                      {region.flag} {region.name} - {region.currency}
                     </option>
                   ))}
                 </select>
@@ -103,9 +103,18 @@ export default function Home() {
               <button 
                 onClick={() => fetchGames()}
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-1.5 rounded text-sm font-medium transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1"
               >
-                {loading ? 'Loading...' : 'Refresh Data'}
+                {loading ? (
+                  <>
+                    <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    🌍 Refresh Data
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -129,7 +138,7 @@ export default function Home() {
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2"></div>
             <p className="text-gray-600 text-sm">
-              Fetching latest Steam data for {regionInfo?.name || 'selected region'}...
+              Fetching latest Steam data for {regionInfo ? `${regionInfo.flag} ${regionInfo.name}` : 'selected region'}...
             </p>
           </div>
         )}
@@ -141,7 +150,7 @@ export default function Home() {
                 🔥 Popular New & Trending Games ({games.length})
                 {regionInfo && (
                   <span className="ml-2 text-xs text-gray-600 font-normal">
-                    in {regionInfo.name}
+                    in {regionInfo.flag} {regionInfo.name}
                   </span>
                 )}
               </h2>
@@ -267,7 +276,7 @@ export default function Home() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Data sourced from Steam Store - Popular New & Trending Releases
-            {regionInfo && ` (${regionInfo.name})`}
+            {regionInfo && ` (${regionInfo.flag} ${regionInfo.name})`}
           </p>
           <p className="mt-1">
             Updated in real-time • {games.length > 0 && `Last updated: ${new Date().toLocaleTimeString()}`}
