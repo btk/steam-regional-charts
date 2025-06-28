@@ -78,9 +78,10 @@ export default function Home() {
                 onChange={(e) => handleRegionChange(e.target.value)}
                 disabled={loading}
                 className="appearance-none bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-200 hover:border-gray-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
               >
                 {availableRegions.map((region) => (
-                  <option key={region.code} value={region.code} className="bg-gray-800">
+                  <option key={region.code} value={region.code} className="bg-gray-800 text-gray-100">
                     {region.flag} {region.name}
                   </option>
                 ))}
