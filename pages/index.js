@@ -68,12 +68,7 @@ export default function Home() {
               Steam Global Charts
             </h1>
             <p className="text-gray-400 text-sm mb-3">
-              Top 30 Games • 55+ Countries
-              {regionInfo && (
-                <span className="ml-2 inline-flex items-center px-2 py-1 rounded text-xs bg-gray-800 text-gray-300">
-                  {regionInfo.flag} {regionInfo.name}
-                </span>
-              )}
+              New & Trending 30 Games{regionInfo ? ` - ${regionInfo.flag} ${regionInfo.name}` : ' - 55+ Countries'}
             </p>
             
             {/* Controls */}
@@ -82,7 +77,7 @@ export default function Home() {
                 value={selectedRegion}
                 onChange={(e) => handleRegionChange(e.target.value)}
                 disabled={loading}
-                className="appearance-none bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 hover:border-gray-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                className="appearance-none bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-200 hover:border-gray-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
               >
                 {availableRegions.map((region) => (
                   <option key={region.code} value={region.code} className="bg-gray-800">
@@ -94,7 +89,7 @@ export default function Home() {
               <button 
                 onClick={() => fetchGames()}
                 disabled={loading}
-                className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-200 px-3 py-1.5 rounded text-sm border border-gray-700 hover:border-gray-600"
+                className="bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-200 px-3 py-1.5 text-sm border border-gray-700 hover:border-gray-600"
               >
                 {loading ? 'Loading...' : 'Refresh'}
               </button>
@@ -106,7 +101,7 @@ export default function Home() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-4">
         {error && (
-          <div className="bg-red-900/30 border border-red-800 text-red-300 px-3 py-2 rounded mb-4 text-sm">
+          <div className="bg-red-900/30 border border-red-800 text-red-300 px-3 py-2 mb-4 text-sm">
             {error}
           </div>
         )}
@@ -121,7 +116,7 @@ export default function Home() {
         )}
 
         {!loading && games.length > 0 && (
-          <div className="bg-gray-900 rounded border border-gray-800">
+          <div className="bg-gray-900 border border-gray-800">
             <div className="px-4 py-2 border-b border-gray-800">
               <h2 className="text-sm font-medium text-gray-300">
                 {games.length} Games
@@ -138,7 +133,7 @@ export default function Home() {
                 <div key={game.id || game.rank} className="p-3 hover:bg-gray-800/50">
                   <div className="flex items-center space-x-3">
                     {/* Rank */}
-                    <div className="flex-shrink-0 w-6 h-6 bg-gray-800 text-gray-400 rounded text-xs flex items-center justify-center font-mono">
+                    <div className="flex-shrink-0 w-6 h-6 bg-gray-800 text-gray-400 text-xs flex items-center justify-center font-mono">
                       {game.rank}
                     </div>
                     
@@ -148,15 +143,15 @@ export default function Home() {
                         <img 
                           src={game.imageUrl} 
                           alt={game.title}
-                          className="rounded object-cover bg-gray-800"
-                          style={{ width: '60px', height: '23px' }}
+                          className="object-cover bg-gray-800"
+                          style={{ width: '120px', height: '45px' }}
                           onError={(e) => {
                             e.target.style.display = 'none';
                           }}
                         />
                       ) : (
-                        <div className="bg-gray-800 rounded flex items-center justify-center" style={{ width: '60px', height: '23px' }}>
-                          <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="bg-gray-800 flex items-center justify-center" style={{ width: '120px', height: '45px' }}>
+                          <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
@@ -189,13 +184,13 @@ export default function Home() {
                     {/* Pricing */}
                     <div className="flex-shrink-0 text-right">
                       {game.isFree ? (
-                        <div className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">
+                        <div className="bg-gray-700 text-gray-300 px-2 py-1 text-xs">
                           Free
                         </div>
                       ) : (
                         <div className="text-xs">
                           {game.discountPercent && (
-                            <div className="bg-green-800 text-green-300 px-1.5 py-0.5 rounded text-xs mb-1">
+                            <div className="bg-green-800 text-green-300 px-1.5 py-0.5 text-xs mb-1">
                               {game.discountPercent}
                             </div>
                           )}
@@ -232,7 +227,7 @@ export default function Home() {
         )}
 
         {!loading && games.length === 0 && !error && (
-          <div className="text-center py-8 bg-gray-900 rounded border border-gray-800">
+          <div className="text-center py-8 bg-gray-900 border border-gray-800">
             <p className="text-gray-500 text-sm">No games found.</p>
           </div>
         )}
