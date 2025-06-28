@@ -42,11 +42,11 @@ export default function Home() {
   const getReviewColor = (sentiment) => {
     if (!sentiment) return 'text-gray-500';
     const lower = sentiment.toLowerCase();
-    if (lower.includes('overwhelmingly positive') || lower.includes('very positive')) return 'text-green-400';
-    if (lower.includes('positive')) return 'text-green-500';
-    if (lower.includes('mostly positive')) return 'text-green-600';
-    if (lower.includes('mixed')) return 'text-yellow-500';
-    if (lower.includes('negative')) return 'text-red-500';
+    if (lower.includes('overwhelmingly positive') || lower.includes('very positive')) return 'text-gray-200';
+    if (lower.includes('positive')) return 'text-gray-300';
+    if (lower.includes('mostly positive')) return 'text-gray-400';
+    if (lower.includes('mixed')) return 'text-gray-500';
+    if (lower.includes('negative')) return 'text-gray-600';
     return 'text-gray-500';
   };
 
@@ -77,7 +77,7 @@ export default function Home() {
                 value={selectedRegion}
                 onChange={(e) => handleRegionChange(e.target.value)}
                 disabled={loading}
-                className="appearance-none bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-200 hover:border-gray-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                className="appearance-none bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-200 hover:border-gray-600 focus:outline-none focus:border-gray-500 disabled:opacity-50"
                 style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
               >
                 {availableRegions.map((region) => (
@@ -102,7 +102,7 @@ export default function Home() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-4">
         {error && (
-          <div className="bg-red-900/30 border border-red-800 text-red-300 px-3 py-2 mb-4 text-sm">
+          <div className="bg-gray-800/50 border border-gray-700 text-gray-300 px-3 py-2 mb-4 text-sm">
             {error}
           </div>
         )}
@@ -191,7 +191,7 @@ export default function Home() {
                       ) : (
                         <div className="text-xs">
                           {game.discountPercent && (
-                            <div className="bg-green-800 text-green-300 px-1.5 py-0.5 text-xs mb-1">
+                            <div className="bg-gray-700 text-gray-300 px-1.5 py-0.5 text-xs mb-1">
                               {game.discountPercent}
                             </div>
                           )}
@@ -215,7 +215,7 @@ export default function Home() {
                         href={game.steamUrl}
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 text-xs"
+                        className="text-gray-300 hover:text-gray-200 text-xs"
                       >
                         Steam
                       </a>
