@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: white;
+  background: linear-gradient(to bottom, #111827, #000000, #111827);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Global scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.4); /* gray-800 with opacity */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.8); /* gray-600 with opacity */
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.9); /* gray-500 with opacity */
+}
+
+/* Horizontal scroll styling for table */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.6); /* gray-900 with opacity */
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.7); /* gray-600 with opacity */
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.9); /* gray-500 with opacity */
+}
+
+/* Custom select styles */
+select {
+  background-image: none;
+}
+
+/* Focus styles */
+button:focus,
+select:focus {
+  outline: none;
+}
+
+/* Smooth animations */
+* {
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, 
+              box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+/* Image loading state */
+img {
+  transition: opacity 0.2s ease;
+}
+
+img[src=""] {
+  opacity: 0;
 }

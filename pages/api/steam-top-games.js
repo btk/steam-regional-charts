@@ -385,14 +385,16 @@ export default async function handler(req, res) {
       region: {
         code: selectedRegion.code,
         name: selectedRegion.name,
-        currency: selectedRegion.currency
+        currency: selectedRegion.currency,
+        flag: selectedRegion.flag
       },
       source: `Steam Store - Popular New Releases (${selectedRegion.name})`,
       games: games,
       availableRegions: Object.entries(STEAM_REGIONS).map(([code, info]) => ({
         code,
         name: info.name,
-        currency: info.currency
+        currency: info.currency,
+        flag: info.flag
       }))
     });
 
