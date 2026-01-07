@@ -377,7 +377,8 @@ export default function Home() {
             <div className="max-w-4xl w-full mx-auto px-4">
               <div className="text-center space-y-4 flex flex-col items-center">
                 <div className="inline-flex items-center gap-2.5 px-6 py-3 bg-purple-900/20 backdrop-blur border border-purple-800/40 rounded-lg text-sm">
-                  <span className="text-gray-400">&nbsp;&nbsp;Live region based data by</span>
+                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse ml-2"></div>
+                  <span className="text-gray-400">Live region based data by</span>
                   <a 
                     href="https://steampeek.net" 
                     target="_blank" 
