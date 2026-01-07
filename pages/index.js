@@ -211,20 +211,21 @@ export default function Home() {
                   </div>
                 </div>
                 
-                <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800/60 rounded-2xl overflow-hidden shadow-2xl w-full max-w-5xl mx-auto mt-8 mb-12">
+                <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800/60 overflow-hidden shadow-2xl w-full max-w-5xl mx-auto mt-8 mb-12">
                   {/* Horizontal Scroll Wrapper */}
                   <div className="overflow-x-auto">
-                    <div className="min-w-[900px]">
+                    <div className="min-w-[1000px]">
                       {/* Table Header */}
                       <div className="bg-gray-900/60 backdrop-blur px-6 py-4 border-b border-gray-800/60">
-                        <div className="grid grid-cols-7 gap-4 font-semibold text-xs text-gray-300 uppercase tracking-wider items-center">
-                          <div className="w-12 flex justify-center">Rank</div>
+                        <div className="grid grid-cols-8 font-semibold text-xs text-gray-300 uppercase tracking-wider items-center">
+                          <div className="flex justify-center" style={{ width: '40px', minWidth: '40px', maxWidth: '40px' }}>Rank</div>
                           <div className="w-32">Image</div>
                           <div className="flex-1 min-w-0">Game</div>
                           <div className="w-24 text-center">Date</div>
                           <div className="w-32 text-center">Reviews</div>
                           <div className="w-20 text-center">Price</div>
-                          <div className="w-12 text-center">Link</div>
+                          <div className="w-10 text-center">Link</div>
+                          <div className="w-10 text-center">SteamPeek</div>
                         </div>
                       </div>
                       
@@ -232,9 +233,9 @@ export default function Home() {
                       <div className="divide-y divide-gray-800/60">
                         {games.map((game, index) => (
                           <div key={game.id || game.rank} className="px-6 py-3 hover:bg-gray-800/30 transition-all duration-200 group">
-                            <div className="grid grid-cols-7 gap-4 items-center">
+                            <div className="grid grid-cols-8 items-center">
                               {/* Rank */}
-                              <div className="w-12 flex justify-center">
+                              <div className="flex justify-center" style={{ width: '40px', minWidth: '40px', maxWidth: '40px' }}>
                                 <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg font-bold text-white text-sm group-hover:border-gray-600 transition-colors">
                                   {game.rank}
                                 </div>
@@ -315,7 +316,7 @@ export default function Home() {
                              </div>
                              
                              {/* Steam Link */}
-                             <div className="w-12 flex justify-center">
+                             <div className="w-10 flex justify-center">
                                {game.steamUrl && (
                                  <a 
                                    href={game.steamUrl} 
@@ -326,6 +327,24 @@ export default function Home() {
                                  >
                                    <svg className="w-4 h-4 group-hover/button:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
                                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16c-.169-.331-.486-.56-.886-.56H6.318c-.4 0-.717.229-.886.56L12 17.64l6.568-9.48z"/>
+                                   </svg>
+                                 </a>
+                               )}
+                             </div>
+                             
+                             {/* SteamPeek Link */}
+                             <div className="w-10 flex justify-center">
+                               {game.id && (
+                                 <a 
+                                   href={`https://steampeek.net/game/${game.id}`} 
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   className="inline-flex items-center justify-center w-8 h-8 bg-purple-600 hover:bg-purple-500 text-white rounded-full transition-all duration-200 group/button hover:scale-105 shadow-md"
+                                   title="View on SteamPeek"
+                                 >
+                                   <svg className="w-4 h-4 group-hover/button:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                    </svg>
                                  </a>
                                )}
@@ -357,11 +376,22 @@ export default function Home() {
           <div className="w-full flex justify-center">
             <div className="max-w-4xl w-full mx-auto px-4">
               <div className="text-center space-y-4 flex flex-col items-center">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900/40 backdrop-blur border border-gray-800/60 rounded-full text-sm">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-gray-300 font-medium">Live Data from Steam</span>
+                <div className="inline-flex items-center gap-2.5 px-6 py-3 bg-purple-900/20 backdrop-blur border border-purple-800/40 rounded-lg text-sm">
+                  <span className="text-gray-400">&nbsp;&nbsp;Live region based data by</span>
+                  <a 
+                    href="https://steampeek.net" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center hover:opacity-80 transition-opacity"
+                  >
+                    <img 
+                      src="https://www.steampeek.net/logo.svg" 
+                      alt="steampeek.net" 
+                      className="h-5"
+                    />
+                  </a>
                 </div>
-                <div style={{ marginTop: '15px', marginBottom: '0px' }}></div>
+                <div style={{ marginTop: '20px', marginBottom: '0px' }}></div>
                 
                 <p className="text-gray-400 text-sm max-w-xl mx-auto leading-relaxed">
                   Game data is sourced from Steam's publicly available charts and regional store listings. 
