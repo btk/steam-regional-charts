@@ -1,43 +1,78 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 
+const REGION_STORAGE_KEY = 'steampeek-selected-region';
+const DEFAULT_REGION = 'us';
+
+/* Locked table layout — keep `min-w-[970px]` and both `grid-cols-[…]` strings identical when editing. */
+
 export default function Home() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedRegion, setSelectedRegion] = useState('us');
+  const [selectedRegion, setSelectedRegion] = useState(DEFAULT_REGION);
   const [availableRegions, setAvailableRegions] = useState([]);
   const [regionInfo, setRegionInfo] = useState(null);
 
   const fetchGames = async (region = selectedRegion) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`/api/steam-top-games?region=${region}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setGames(data.games);
         setRegionInfo(data.region);
         setAvailableRegions(data.availableRegions);
-      } else {
-        setError(data.error || 'Failed to fetch games');
+        setLoading(false);
+        return;
       }
+
+      if (response.status === 400 && region !== DEFAULT_REGION) {
+        try {
+          localStorage.removeItem(REGION_STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
+        setSelectedRegion(DEFAULT_REGION);
+        await fetchGames(DEFAULT_REGION);
+        return;
+      }
+
+      setError(data.error || 'Failed to fetch games');
     } catch (err) {
       setError('Network error: ' + err.message);
     }
-    
+
     setLoading(false);
   };
 
   const handleRegionChange = (newRegion) => {
     setSelectedRegion(newRegion);
+    try {
+      localStorage.setItem(REGION_STORAGE_KEY, newRegion);
+    } catch {
+      /* ignore */
+    }
     fetchGames(newRegion);
   };
 
   useEffect(() => {
-    fetchGames();
+    let initial = DEFAULT_REGION;
+    try {
+      const stored = localStorage.getItem(REGION_STORAGE_KEY);
+      if (stored) {
+        const code = stored.trim().toLowerCase();
+        if (code) initial = code;
+      }
+    } catch {
+      /* ignore */
+    }
+    setSelectedRegion(initial);
+    fetchGames(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once using stored region, not selectedRegion
   }, []);
 
   const getReviewColor = (sentiment) => {
@@ -64,31 +99,31 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Steam Regional Charts - Discover Popular Games by Region</title>
-        <meta name="description" content="Discover the most popular new releases on Steam across different regions. Real-time data with pricing, reviews, and regional availability for 30+ countries." />
-        <meta name="keywords" content="Steam, games, regional pricing, popular games, new releases, game charts, Steam statistics, gaming trends" />
-        <meta name="author" content="Steam Regional Charts" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>steampeek — Popular new Steam releases by region</title>
+        <meta name="description" content="Discover the most popular new releases on Steam across different regions. Real-time data with pricing, reviews, and regional availability for 55+ countries — from steampeek." />
+        <meta name="keywords" content="steampeek, Steam, games, regional pricing, popular games, new releases, game charts, Steam statistics, gaming trends" />
+        <meta name="author" content="steampeek" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         
         {/* Open Graph Meta Tags */}
-        <meta property="og:title" content="Steam Regional Charts - Discover Popular Games by Region" />
+        <meta property="og:title" content="steampeek — Popular new Steam releases by region" />
         <meta property="og:description" content="Discover the most popular new releases on Steam across different regions. Real-time data with pricing, reviews, and regional availability." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://steam-regional-charts.vercel.app" />
-        <meta property="og:image" content="https://steam-regional-charts.vercel.app/og-image.png" />
-        <meta property="og:site_name" content="Steam Regional Charts" />
+        <meta property="og:url" content="https://steampeek.net" />
+        <meta property="og:image" content="https://steampeek.net/og-image.png" />
+        <meta property="og:site_name" content="steampeek" />
         
         {/* Twitter Card Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Steam Regional Charts - Discover Popular Games by Region" />
+        <meta name="twitter:title" content="steampeek — Popular new Steam releases by region" />
         <meta name="twitter:description" content="Discover the most popular new releases on Steam across different regions. Real-time data with pricing and reviews." />
-        <meta name="twitter:image" content="https://steam-regional-charts.vercel.app/og-image.png" />
+        <meta name="twitter:image" content="https://steampeek.net/og-image.png" />
         
         {/* Additional Meta Tags */}
         <meta name="robots" content="index, follow" />
         <meta name="language" content="English" />
         <meta name="theme-color" content="#000000" />
-        <link rel="canonical" href="https://steam-regional-charts.vercel.app" />
+        <link rel="canonical" href="https://steampeek.net" />
         
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
@@ -103,7 +138,8 @@ export default function Home() {
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'WebApplication',
-              name: 'Steam Regional Charts',
+              name: 'steampeek',
+              url: 'https://steampeek.net',
               description: 'Discover the most popular new releases on Steam across different regions with real-time pricing and reviews.',
               applicationCategory: 'GameApplication',
               operatingSystem: 'Web Browser',
@@ -114,7 +150,8 @@ export default function Home() {
               },
               creator: {
                 '@type': 'Organization',
-                name: 'Steam Regional Charts'
+                name: 'steampeek',
+                url: 'https://steampeek.net'
               }
             })
           }}
@@ -122,6 +159,26 @@ export default function Home() {
       </Head>
       
       <div className="min-h-screen bg-black text-white" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <header className="sticky top-0 z-50 w-full border-b border-gray-800/60 bg-black/80 backdrop-blur-md text-center">
+          <div className="px-8 pb-10 pt-16 md:px-10 md:pb-12 md:pt-24">
+            <a
+              href="https://steampeek.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-md"
+              aria-label="steampeek — steampeek.net"
+            >
+              <img
+                src="/logo.svg"
+                alt="steampeek"
+                width={168}
+                height={37}
+                className="block h-7 w-auto md:h-8"
+              />
+            </a>
+          </div>
+        </header>
+
         {/* Hero Section with Gradient Background */}
         <div className="relative overflow-hidden bg-gradient-to-br from-blue-950/30 via-black to-purple-950/30">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900/20 via-gray-900/10 to-transparent"></div>
@@ -129,42 +186,46 @@ export default function Home() {
           {/* Background Grid Pattern */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
           
-          <div className="relative w-full flex justify-center py-24 md:py-32" style={{ marginTop: '25px', marginBottom: '20px' }}>
-            <div className="max-w-5xl w-full mx-auto px-4">
-              <div className="text-center flex flex-col items-center">
-                <h1 className="text-3xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent leading-tight">
-                  Steam Regional Charts
+          <div className="relative flex w-full justify-center pb-16 pt-16 md:pb-24 md:pt-24">
+            <div className="mx-auto w-full max-w-5xl px-8 md:px-10">
+              <div className="flex flex-col items-center gap-4 text-center md:gap-5">
+                <h1 className="w-full text-xl font-semibold leading-snug tracking-tight text-gray-100 sm:text-2xl md:text-3xl md:whitespace-nowrap">
+                  Popular new Steam releases by region
                 </h1>
-                <p className="text-xl md:text-2xl text-gray-400 mb-16 max-w-4xl mx-auto leading-relaxed">
+                <p className="mx-auto w-full max-w-[550px] text-sm leading-relaxed text-gray-400 md:text-base">
                   Discover the most popular new releases across Steam's global regions. Real-time data from Steam's public charts.
                 </p>
                 
                 {/* Controls Card */}
-                <div className="w-full flex justify-center" style={{ marginTop: '20px', marginBottom: '20px' }}>
-                  <div className="max-w-2xl w-full">
-                    <div className="bg-gray-900/30 backdrop-blur-xl rounded-2xl p-8">
+                <div className="flex w-full justify-center px-2 sm:px-3">
+                  <div className="w-full max-w-2xl">
+                    <div className="rounded-2xl bg-gray-900/30 px-8 py-9 backdrop-blur-xl sm:px-10 sm:py-10 md:px-12 md:py-12">
                       {/* Controls */}
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="relative w-full max-w-md">
-                          <label className="block text-sm font-semibold text-gray-200 mb-3 text-center tracking-wide">
+                      <div className="flex flex-col items-center justify-center px-2 py-1 sm:px-4 sm:py-2">
+                        <div className="w-full max-w-md">
+                          <label className="mb-3 block text-center text-sm font-semibold tracking-wide text-gray-200 md:mb-4">
                             SELECT REGION
                           </label>
-                          <select
-                            value={selectedRegion}
-                            onChange={(e) => handleRegionChange(e.target.value)}
-                            disabled={loading}
-                            className="w-full appearance-none bg-gradient-to-r from-gray-800/80 to-gray-900/80 backdrop-blur hover:from-gray-700/80 hover:to-gray-800/80 focus:from-gray-700/90 focus:to-gray-800/90 text-white px-8 py-6 pr-16 rounded-2xl text-xl font-bold text-center focus:outline-none focus:ring-4 focus:ring-blue-500/40 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl transform hover:scale-105 border border-gray-700/50 hover:border-gray-600/50"
-                          >
-                            {availableRegions.map((region) => (
-                              <option key={region.code} value={region.code} className="bg-black py-3 text-lg">
-                                {region.flag} {region.name}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none pt-10" style={{ paddingTop: '18px', paddingRight: '10px' }}>
-                            <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                            </svg>
+                          <div className="px-4 pb-3 pt-1 sm:px-6 sm:pb-4">
+                            <div className="relative">
+                              <select
+                                value={selectedRegion}
+                                onChange={(e) => handleRegionChange(e.target.value)}
+                                disabled={loading}
+                                className="w-full cursor-pointer appearance-none rounded-2xl border border-gray-700/50 bg-gradient-to-r from-gray-800/80 to-gray-900/80 px-8 py-6 pr-16 text-center text-xl font-bold text-white shadow-xl backdrop-blur transition-all duration-300 hover:scale-105 hover:border-gray-600/50 hover:from-gray-700/80 hover:to-gray-800/80 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/40 focus:from-gray-700/90 focus:to-gray-800/90 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {availableRegions.map((region) => (
+                                  <option key={region.code} value={region.code} className="bg-black py-3 text-lg">
+                                    {region.flag} {region.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-6 pt-10" style={{ paddingTop: "18px", paddingRight: "10px" }}>
+                                <svg className="h-7 w-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -178,7 +239,7 @@ export default function Home() {
 
         {/* Main Content */}
         <div className="w-full flex justify-center">
-          <div className="max-w-5xl w-full mx-auto px-4 py-20">
+          <div className="mx-auto w-full max-w-5xl px-8 pb-20 pt-10 md:px-10 md:pb-24 md:pt-14">
             {error && (
               <div className="mb-8 bg-red-900/20 border border-red-800/60 backdrop-blur-sm text-red-200 px-6 py-4 rounded-xl text-center">
                 <div className="flex items-center justify-center gap-2">
@@ -211,32 +272,32 @@ export default function Home() {
                   </div>
                 </div>
                 
-                <div className="bg-gray-900/30 backdrop-blur-sm border border-gray-800/60 overflow-hidden shadow-2xl w-full max-w-5xl mx-auto mt-8 mb-12">
-                  {/* Horizontal Scroll Wrapper */}
+                <div className="mx-auto mb-12 mt-14 w-full max-w-5xl overflow-hidden border border-gray-800/60 bg-gray-900/30 shadow-2xl backdrop-blur-sm md:mt-20">
+                  {/* Horizontal Scroll Wrapper — min width locked with grid below */}
                   <div className="overflow-x-auto">
-                    <div className="min-w-[1000px]">
-                      {/* Table Header */}
-                      <div className="bg-gray-900/60 backdrop-blur px-6 py-4 border-b border-gray-800/60">
-                        <div className="grid grid-cols-8 font-semibold text-xs text-gray-300 uppercase tracking-wider items-center">
-                          <div className="flex justify-center" style={{ width: '40px', minWidth: '40px', maxWidth: '40px' }}>Rank</div>
-                          <div className="w-32">Image</div>
-                          <div className="flex-1 min-w-0">Game</div>
-                          <div className="w-24 text-center">Date</div>
-                          <div className="w-32 text-center">Reviews</div>
-                          <div className="w-20 text-center">Price</div>
-                          <div className="w-10 text-center">Link</div>
-                          <div className="w-10 text-center">SteamPeek</div>
+                    <div className="min-w-[970px]">
+                      {/* Table header (grid locked — see file top comment) */}
+                      <div className="border-b border-gray-800/60 bg-gray-900/60 px-8 py-4 backdrop-blur md:px-6">
+                        <div className="grid grid-cols-[44px_128px_minmax(120px,0.95fr)_96px_128px_80px_40px_56px] gap-x-3 font-semibold text-xs text-gray-300 uppercase tracking-wider items-center">
+                          <div className="flex justify-center tabular-nums">Rank</div>
+                          <div>Image</div>
+                          <div className="min-w-0">Game</div>
+                          <div className="w-full text-center">Date</div>
+                          <div className="w-full text-center">Reviews</div>
+                          <div className="w-full text-center">Price</div>
+                          <div className="w-full text-center">Link</div>
+                          <div className="w-full text-center">steamdb</div>
                         </div>
                       </div>
                       
                       {/* Table Body */}
                       <div className="divide-y divide-gray-800/60">
                         {games.map((game, index) => (
-                          <div key={game.id || game.rank} className="px-6 py-3 hover:bg-gray-800/30 transition-all duration-200 group">
-                            <div className="grid grid-cols-8 items-center">
+                          <div key={game.id || game.rank} className="px-8 py-3 transition-all duration-200 group hover:bg-gray-800/30 md:px-6">
+                            <div className="grid grid-cols-[44px_128px_minmax(120px,0.95fr)_96px_128px_80px_40px_56px] gap-x-3 items-center">
                               {/* Rank */}
-                              <div className="flex justify-center" style={{ width: '40px', minWidth: '40px', maxWidth: '40px' }}>
-                                <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg font-bold text-white text-sm group-hover:border-gray-600 transition-colors">
+                              <div className="flex justify-center">
+                                <div className="inline-flex size-8 items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg font-bold text-white text-sm tabular-nums group-hover:border-gray-600 transition-colors">
                                   {game.rank}
                                 </div>
                               </div>
@@ -263,19 +324,19 @@ export default function Home() {
                               </div>
                               
                               {/* Game Title */}
-                              <div className="flex-1 min-w-0">
+                              <div className="min-w-0 pr-1">
                                 <h3 className="font-semibold text-white text-base group-hover:text-blue-300 transition-colors truncate">
                                   {game.title}
                                 </h3>
                               </div>
                               
                               {/* Release Date */}
-                              <div className="w-24 text-center">
+                              <div className="w-full text-center">
                                 <span className="text-gray-400 text-sm">{game.releaseDate}</span>
                               </div>
                              
                              {/* Reviews */}
-                             <div className="w-32 text-center">
+                             <div className="w-full text-center">
                                {game.reviewSentiment && (
                                  <div className="space-y-0.5">
                                    <div className={`${getReviewColor(game.reviewSentiment)} font-medium text-xs`}>
@@ -291,7 +352,7 @@ export default function Home() {
                              </div>
                              
                              {/* Price */}
-                             <div className="w-20 text-center">
+                             <div className="w-full text-center">
                                {game.isFree ? (
                                  <div className="inline-flex items-center px-2 py-1 bg-green-900/30 border border-green-800/60 text-green-300 rounded-md text-xs font-semibold">
                                    Free
@@ -316,7 +377,7 @@ export default function Home() {
                              </div>
                              
                              {/* Steam Link */}
-                             <div className="w-10 flex justify-center">
+                             <div className="flex w-full justify-center">
                                {game.steamUrl && (
                                  <a 
                                    href={game.steamUrl} 
@@ -332,19 +393,18 @@ export default function Home() {
                                )}
                              </div>
                              
-                             {/* SteamPeek Link */}
-                             <div className="w-10 flex justify-center">
+                             {/* SteamDB link */}
+                             <div className="flex w-full justify-center">
                                {game.id && (
-                                 <a 
-                                   href={`https://steampeek.net/game/${game.id}`} 
+                                 <a
+                                   href={`https://steamdb.info/app/${game.id}/`}
                                    target="_blank"
                                    rel="noopener noreferrer"
-                                   className="inline-flex items-center justify-center w-8 h-8 bg-purple-600 hover:bg-purple-500 text-white rounded-full transition-all duration-200 group/button hover:scale-105 shadow-md"
-                                   title="View on SteamPeek"
+                                   className="inline-flex items-center justify-center w-8 h-8 bg-orange-700 hover:bg-orange-600 text-white rounded-lg transition-all duration-200 group/button hover:scale-105 shadow-md"
+                                   title="View on SteamDB"
                                  >
-                                   <svg className="w-4 h-4 group-hover/button:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                   <svg className="w-4 h-4 group-hover/button:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                    </svg>
                                  </a>
                                )}
@@ -374,7 +434,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="bg-gradient-to-r from-gray-900/50 to-black border-t border-gray-800/60 py-12 mt-16" style={{ marginTop: '20px', paddingTop: '20px', paddingBottom: '30px' }}>
           <div className="w-full flex justify-center">
-            <div className="max-w-4xl w-full mx-auto px-4">
+            <div className="mx-auto w-full max-w-4xl px-8 md:px-10">
               <div className="text-center space-y-4 flex flex-col items-center">
                 <div className="inline-flex items-center gap-2.5 px-6 py-3 bg-purple-900/20 backdrop-blur border border-purple-800/40 rounded-lg text-sm">
                   <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse relative" style={{ left: '5px' }}></div>
@@ -385,10 +445,12 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center hover:opacity-80 transition-opacity"
                   >
-                    <img 
-                      src="https://www.steampeek.net/logo.svg" 
-                      alt="steampeek.net" 
-                      className="h-5"
+                    <img
+                      src="/logo.svg"
+                      alt="steampeek"
+                      width={168}
+                      height={37}
+                      className="h-5 w-auto"
                     />
                   </a>
                 </div>

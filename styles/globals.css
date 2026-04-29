@@ -18,6 +18,7 @@ body {
 body {
   color: white;
   background: linear-gradient(to bottom, #111827, #000000, #111827);
+  padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
 }
 
 a {
