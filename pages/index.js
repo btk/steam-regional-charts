@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 
 const REGION_STORAGE_KEY = 'steampeek-selected-region';
@@ -6,13 +6,15 @@ const DEFAULT_REGION = 'us';
 
 /* Locked table layout — keep `min-w-[970px]` and both `grid-cols-[…]` strings identical when editing. */
 
-export default function Home() {
+export default function Home({ initialRegion = '' }) {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState(DEFAULT_REGION);
   const [availableRegions, setAvailableRegions] = useState([]);
   const [regionInfo, setRegionInfo] = useState(null);
+  const typeaheadBufferRef = useRef('');
+  const typeaheadTimerRef = useRef(null);
 
   const fetchGames = async (region = selectedRegion) => {
     setLoading(true);
@@ -56,16 +58,79 @@ export default function Home() {
     } catch {
       /* ignore */
     }
+
+    try {
+      if (typeof window !== 'undefined') {
+        const nextPath = newRegion === DEFAULT_REGION ? '/' : `/region/${newRegion}/`;
+        if (window.location.pathname !== nextPath) {
+          window.history.replaceState(null, '', nextPath);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
     fetchGames(newRegion);
+  };
+
+  const getNextTypeaheadMatch = (query, currentCode) => {
+    if (!query || !availableRegions.length) return null;
+
+    const normalized = query.toLowerCase();
+    const currentIndex = availableRegions.findIndex((region) => region.code === currentCode);
+    const startIndex = currentIndex >= 0 ? (currentIndex + 1) % availableRegions.length : 0;
+
+    const ordered = [
+      ...availableRegions.slice(startIndex),
+      ...availableRegions.slice(0, startIndex),
+    ];
+
+    return ordered.find((region) => {
+      const name = region.name?.toLowerCase() || '';
+      const code = region.code?.toLowerCase() || '';
+      return name.startsWith(normalized) || code.startsWith(normalized);
+    }) || null;
+  };
+
+  const handleRegionTypeahead = (event) => {
+    if (event.key.length !== 1 || !/[a-z]/i.test(event.key)) return;
+
+    event.preventDefault();
+
+    if (typeaheadTimerRef.current) {
+      clearTimeout(typeaheadTimerRef.current);
+    }
+
+    typeaheadBufferRef.current += event.key.toLowerCase();
+    const match = getNextTypeaheadMatch(typeaheadBufferRef.current, selectedRegion);
+
+    if (match) {
+      handleRegionChange(match.code);
+    }
+
+    typeaheadTimerRef.current = setTimeout(() => {
+      typeaheadBufferRef.current = '';
+      typeaheadTimerRef.current = null;
+    }, 700);
   };
 
   useEffect(() => {
     let initial = DEFAULT_REGION;
+
+    const routeRegion = initialRegion?.trim().toLowerCase();
+    if (routeRegion) {
+      initial = routeRegion;
+    }
+
     try {
-      const stored = localStorage.getItem(REGION_STORAGE_KEY);
-      if (stored) {
-        const code = stored.trim().toLowerCase();
-        if (code) initial = code;
+      if (!routeRegion) {
+        const stored = localStorage.getItem(REGION_STORAGE_KEY);
+        if (stored) {
+          const code = stored.trim().toLowerCase();
+          if (code) initial = code;
+        }
+      } else {
+        localStorage.setItem(REGION_STORAGE_KEY, routeRegion);
       }
     } catch {
       /* ignore */
@@ -73,6 +138,14 @@ export default function Home() {
     setSelectedRegion(initial);
     fetchGames(initial);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once using stored region, not selectedRegion
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (typeaheadTimerRef.current) {
+        clearTimeout(typeaheadTimerRef.current);
+      }
+    };
   }, []);
 
   const getReviewColor = (sentiment) => {
@@ -160,7 +233,7 @@ export default function Home() {
       
       <div className="min-h-screen bg-black text-white" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
         <header className="sticky top-0 z-50 w-full border-b border-gray-800/60 bg-black/80 backdrop-blur-md text-center">
-          <div className="px-8 pb-10 pt-16 md:px-10 md:pb-12 md:pt-24">
+          <div className="px-8 pb-10 pt-16 md:px-10 md:pb-12 md:pt-24" style={{ paddingTop: '10px' }}>
             <a
               href="https://steampeek.net"
               target="_blank"
@@ -188,8 +261,8 @@ export default function Home() {
           
           <div className="relative flex w-full justify-center pb-16 pt-16 md:pb-24 md:pt-24">
             <div className="mx-auto w-full max-w-5xl px-8 md:px-10">
-              <div className="flex flex-col items-center gap-4 text-center md:gap-5">
-                <h1 className="w-full text-xl font-semibold leading-snug tracking-tight text-gray-100 sm:text-2xl md:text-3xl md:whitespace-nowrap">
+              <div className="flex flex-col items-center gap-3 text-center md:gap-4">
+                <h1 className="w-full text-xl font-semibold leading-snug tracking-tight text-gray-100 sm:text-2xl md:text-3xl md:whitespace-nowrap" style={{ marginTop: '10px',marginBottom: '0px' }}>
                   Popular new Steam releases by region
                 </h1>
                 <p className="mx-auto w-full max-w-[550px] text-sm leading-relaxed text-gray-400 md:text-base">
@@ -197,20 +270,21 @@ export default function Home() {
                 </p>
                 
                 {/* Controls Card */}
-                <div className="flex w-full justify-center px-2 sm:px-3">
+                <div className="flex w-full justify-center px-2 sm:px-3" style={{ marginBottom: '20px' }}>
                   <div className="w-full max-w-2xl">
-                    <div className="rounded-2xl bg-gray-900/30 px-8 py-9 backdrop-blur-xl sm:px-10 sm:py-10 md:px-12 md:py-12">
+                    <div className="rounded-2xl bg-gray-900/30 px-7 py-7 backdrop-blur-xl sm:px-9 sm:py-8 md:px-10 md:py-10">
                       {/* Controls */}
-                      <div className="flex flex-col items-center justify-center px-2 py-1 sm:px-4 sm:py-2">
+                      <div className="flex flex-col items-center justify-center px-1 py-0 sm:px-3 sm:py-1">
                         <div className="w-full max-w-md">
-                          <label className="mb-3 block text-center text-sm font-semibold tracking-wide text-gray-200 md:mb-4">
+                          <label className="mb-2 block text-center text-sm font-semibold tracking-wide text-gray-200 md:mb-3">
                             SELECT REGION
                           </label>
-                          <div className="px-4 pb-3 pt-1 sm:px-6 sm:pb-4">
+                          <div className="px-4 pb-6 pt-0 sm:px-6 sm:pb-8">
                             <div className="relative">
                               <select
                                 value={selectedRegion}
                                 onChange={(e) => handleRegionChange(e.target.value)}
+                                onKeyDown={handleRegionTypeahead}
                                 disabled={loading}
                                 className="w-full cursor-pointer appearance-none rounded-2xl border border-gray-700/50 bg-gradient-to-r from-gray-800/80 to-gray-900/80 px-8 py-6 pr-16 text-center text-xl font-bold text-white shadow-xl backdrop-blur transition-all duration-300 hover:scale-105 hover:border-gray-600/50 hover:from-gray-700/80 hover:to-gray-800/80 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/40 focus:from-gray-700/90 focus:to-gray-800/90 disabled:cursor-not-allowed disabled:opacity-50"
                               >
@@ -220,7 +294,7 @@ export default function Home() {
                                   </option>
                                 ))}
                               </select>
-                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-6 pt-10" style={{ paddingTop: "18px", paddingRight: "10px" }}>
+                              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
                                 <svg className="h-7 w-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -272,7 +346,7 @@ export default function Home() {
                   </div>
                 </div>
                 
-                <div className="mx-auto mb-12 mt-14 w-full max-w-5xl overflow-hidden border border-gray-800/60 bg-gray-900/30 shadow-2xl backdrop-blur-sm md:mt-20">
+                <div className="mx-auto mb-12 mt-14 w-full max-w-5xl overflow-hidden border border-gray-800/60 bg-gray-900/30 pt-3 shadow-2xl backdrop-blur-sm md:mt-20 md:pt-4">
                   {/* Horizontal Scroll Wrapper — min width locked with grid below */}
                   <div className="overflow-x-auto">
                     <div className="min-w-[970px]">
@@ -435,9 +509,9 @@ export default function Home() {
         <footer className="bg-gradient-to-r from-gray-900/50 to-black border-t border-gray-800/60 py-12 mt-16" style={{ marginTop: '20px', paddingTop: '20px', paddingBottom: '30px' }}>
           <div className="w-full flex justify-center">
             <div className="mx-auto w-full max-w-4xl px-8 md:px-10">
-              <div className="text-center space-y-4 flex flex-col items-center">
-                <div className="inline-flex items-center gap-2.5 px-6 py-3 bg-purple-900/20 backdrop-blur border border-purple-800/40 rounded-lg text-sm">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse relative" style={{ left: '5px' }}></div>
+              <div className="mx-4 flex flex-col items-center space-y-4 px-4 text-center md:mx-6 md:px-6">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-purple-800/40 bg-purple-900/20 px-4 py-2 text-sm backdrop-blur">
+                  <div className="ml-1 h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse"></div>
                   <span className="text-gray-400">Live region based data by</span>
                   <a 
                     href="https://steampeek.net" 
@@ -450,13 +524,13 @@ export default function Home() {
                       alt="steampeek"
                       width={168}
                       height={37}
-                      className="h-5 w-auto"
+                      className="h-4 w-auto"
                     />
                   </a>
                 </div>
                 <div style={{ marginTop: '20px', marginBottom: '0px' }}></div>
                 
-                <p className="text-gray-400 text-sm max-w-xl mx-auto leading-relaxed">
+                <p className="mx-auto w-full max-w-[calc(100%-2rem)] px-6 text-sm leading-relaxed text-gray-400 sm:max-w-xl sm:px-8">
                   Game data is sourced from Steam's publicly available charts and regional store listings. 
                   Updated in real-time with every request across 55+ supported regions.
                 </p>
