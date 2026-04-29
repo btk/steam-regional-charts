@@ -169,34 +169,49 @@ export default function Home({ initialRegion = '' }) {
     return count.toString();
   };
 
+  const routeRegionCode = initialRegion?.trim().toLowerCase();
+  const hasRouteRegion = Boolean(routeRegionCode && routeRegionCode !== DEFAULT_REGION);
+  const seoRegionName = hasRouteRegion
+    ? (regionInfo?.name || routeRegionCode.toUpperCase())
+    : '';
+  const seoTitle = hasRouteRegion
+    ? `steampeek — Popular new Steam releases in ${seoRegionName}`
+    : 'steampeek — Popular new Steam releases by region';
+  const seoDescription = hasRouteRegion
+    ? `Discover the most popular new Steam releases in ${seoRegionName}. Real-time data with regional pricing, reviews, and availability from steampeek.`
+    : 'Discover the most popular new releases on Steam across different regions. Real-time data with pricing, reviews, and regional availability for 55+ countries — from steampeek.';
+  const seoCanonicalUrl = hasRouteRegion
+    ? `https://steampeek.net/region/${routeRegionCode}/`
+    : 'https://steampeek.net';
+
   return (
     <>
       <Head>
-        <title>steampeek — Popular new Steam releases by region</title>
-        <meta name="description" content="Discover the most popular new releases on Steam across different regions. Real-time data with pricing, reviews, and regional availability for 55+ countries — from steampeek." />
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
         <meta name="keywords" content="steampeek, Steam, games, regional pricing, popular games, new releases, game charts, Steam statistics, gaming trends" />
         <meta name="author" content="steampeek" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         
         {/* Open Graph Meta Tags */}
-        <meta property="og:title" content="steampeek — Popular new Steam releases by region" />
-        <meta property="og:description" content="Discover the most popular new releases on Steam across different regions. Real-time data with pricing, reviews, and regional availability." />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://steampeek.net" />
+        <meta property="og:url" content={seoCanonicalUrl} />
         <meta property="og:image" content="https://steampeek.net/og-image.png" />
         <meta property="og:site_name" content="steampeek" />
         
         {/* Twitter Card Meta Tags */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="steampeek — Popular new Steam releases by region" />
-        <meta name="twitter:description" content="Discover the most popular new releases on Steam across different regions. Real-time data with pricing and reviews." />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
         <meta name="twitter:image" content="https://steampeek.net/og-image.png" />
         
         {/* Additional Meta Tags */}
         <meta name="robots" content="index, follow" />
         <meta name="language" content="English" />
         <meta name="theme-color" content="#000000" />
-        <link rel="canonical" href="https://steampeek.net" />
+        <link rel="canonical" href={seoCanonicalUrl} />
         
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
@@ -212,8 +227,8 @@ export default function Home({ initialRegion = '' }) {
               '@context': 'https://schema.org',
               '@type': 'WebApplication',
               name: 'steampeek',
-              url: 'https://steampeek.net',
-              description: 'Discover the most popular new releases on Steam across different regions with real-time pricing and reviews.',
+              url: seoCanonicalUrl,
+              description: seoDescription,
               applicationCategory: 'GameApplication',
               operatingSystem: 'Web Browser',
               offers: {
