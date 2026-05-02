@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 
 const REGION_STORAGE_KEY = 'steampeek-selected-region';
+const TRACKED_GAMES_STORAGE_KEY = 'steampeek-tracked-games';
 const DEFAULT_REGION = 'us';
 
 /* Locked table layout — keep `min-w-[970px]` and both `grid-cols-[…]` strings identical when editing. */
@@ -13,6 +14,7 @@ export default function Home({ initialRegion = '' }) {
   const [selectedRegion, setSelectedRegion] = useState(DEFAULT_REGION);
   const [availableRegions, setAvailableRegions] = useState([]);
   const [regionInfo, setRegionInfo] = useState(null);
+  const [trackedGameIds, setTrackedGameIds] = useState([]);
   const typeaheadBufferRef = useRef('');
   const typeaheadTimerRef = useRef(null);
 
@@ -141,12 +143,41 @@ export default function Home({ initialRegion = '' }) {
   }, []);
 
   useEffect(() => {
+    try {
+      const storedTrackedGames = localStorage.getItem(TRACKED_GAMES_STORAGE_KEY);
+      if (!storedTrackedGames) return;
+      const parsed = JSON.parse(storedTrackedGames);
+      if (!Array.isArray(parsed)) return;
+      const normalized = [...new Set(parsed.map((id) => String(id)).filter(Boolean))];
+      setTrackedGameIds(normalized);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (typeaheadTimerRef.current) {
         clearTimeout(typeaheadTimerRef.current);
       }
     };
   }, []);
+
+  const toggleTrackedGame = (gameId) => {
+    if (!gameId) return;
+    const normalizedGameId = String(gameId);
+    setTrackedGameIds((previous) => {
+      const nextTrackedGames = previous.includes(normalizedGameId)
+        ? previous.filter((id) => id !== normalizedGameId)
+        : [...previous, normalizedGameId];
+      try {
+        localStorage.setItem(TRACKED_GAMES_STORAGE_KEY, JSON.stringify(nextTrackedGames));
+      } catch {
+        /* ignore */
+      }
+      return nextTrackedGames;
+    });
+  };
 
   const getReviewColor = (sentiment) => {
     if (!sentiment) return 'text-gray-500';
@@ -415,8 +446,8 @@ export default function Home({ initialRegion = '' }) {
       </Head>
       
       <div className="min-h-screen bg-black text-white" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-        <header className="sticky top-0 z-50 w-full border-b border-gray-800/60 bg-black/80 backdrop-blur-md text-center">
-          <div className="px-8 pb-10 pt-16 md:px-10 md:pb-12 md:pt-24" style={{ paddingTop: '10px' }}>
+        <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-800/60 bg-black/80 backdrop-blur-md text-center md:static md:left-auto md:right-auto">
+          <div className="px-8 pb-10 pt-16 md:px-10 md:pb-12 md:pt-24" style={{ paddingTop: 'max(10px, env(safe-area-inset-top, 0px))' }}>
             <a
               href="https://steampeek.net"
               target="_blank"
@@ -435,14 +466,23 @@ export default function Home({ initialRegion = '' }) {
           </div>
         </header>
 
-        {/* Hero Section with Gradient Background */}
+        {/* Fixed header is out of flow — this spacer reserves its height on mobile only */}
+        <div
+          className="w-full shrink-0 md:hidden"
+          aria-hidden="true"
+          style={{
+            height: 'calc(env(safe-area-inset-top, 0px) + 6px + 1.75rem + 1.75rem)',
+          }}
+        />
+
+        {/* Hero Section */}
         <div className="relative overflow-hidden bg-gradient-to-br from-blue-950/30 via-black to-purple-950/30">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900/20 via-gray-900/10 to-transparent"></div>
           
           {/* Background Grid Pattern */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
           
-          <div className="relative flex w-full justify-center pb-16 pt-16 md:pb-24 md:pt-24">
+          <div className="relative flex w-full justify-center pb-16 pt-8 md:pb-24 md:pt-24">
             <div className="mx-auto w-full max-w-5xl px-8 md:px-10">
               <div className="flex flex-col items-center gap-3 text-center md:gap-4">
                 <h1 className="w-full text-xl font-semibold leading-snug tracking-tight text-gray-100 sm:text-2xl md:text-3xl md:whitespace-nowrap" style={{ marginTop: '10px',marginBottom: '0px' }}>
@@ -549,13 +589,40 @@ export default function Home({ initialRegion = '' }) {
                       
                       {/* Table Body */}
                       <div className="divide-y divide-gray-800/60">
-                        {games.map((game, index) => (
-                          <div key={game.id || game.rank} className="px-8 py-3 transition-all duration-200 group hover:bg-gray-800/30 md:px-6">
+                        {games.map((game, index) => {
+                          const isTrackedGame = Boolean(game.id && trackedGameIds.includes(String(game.id)));
+                          return (
+                          <div
+                            key={game.id || game.rank}
+                            className={`px-8 py-3 transition-all duration-200 group md:px-6 ${isTrackedGame ? 'bg-green-900/15 hover:bg-green-900/25' : 'hover:bg-gray-800/30'}`}
+                          >
                             <div className="grid grid-cols-[44px_128px_minmax(120px,0.95fr)_96px_128px_80px_40px_56px] gap-x-3 items-center">
                               {/* Rank */}
                               <div className="flex justify-center">
-                                <div className="inline-flex size-8 items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-lg font-bold text-white text-sm tabular-nums group-hover:border-gray-600 transition-colors">
-                                  {game.rank}
+                                <div className={`relative inline-flex size-8 items-center justify-center rounded-lg font-bold text-white text-sm tabular-nums transition-colors ${isTrackedGame ? 'bg-gradient-to-br from-green-900/60 to-green-950/70 border border-green-700/70 group-hover:from-red-900/45 group-hover:to-red-950/60 group-hover:border-red-700/70' : 'bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 group-hover:border-gray-600'}`}>
+                                  <span className="transition-opacity duration-150 group-hover:opacity-0">
+                                    {game.rank}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleTrackedGame(game.id)}
+                                    disabled={!game.id}
+                                    className={`peer absolute inset-0 inline-flex items-center justify-center rounded-lg border transition-all duration-150 ${isTrackedGame ? 'opacity-0 group-hover:opacity-100 bg-red-900/35 hover:bg-red-900/50 border-red-700/50 text-red-200 cursor-pointer' : 'opacity-0 group-hover:opacity-100 bg-green-700/35 hover:bg-green-700/50 border-green-500/50 text-green-100 cursor-pointer'}`}
+                                    aria-label={isTrackedGame ? `Untrack ${game.title}` : `Track ${game.title}`}
+                                  >
+                                    {isTrackedGame ? (
+                                      <svg className="h-4 w-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 6l12 12M18 6L6 18" />
+                                      </svg>
+                                    ) : (
+                                      <svg className="h-4 w-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 5v14m-7-7h14" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                  <span className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-gray-700/90 bg-black/95 px-3 py-1 text-[10px] font-medium text-gray-100 shadow-lg peer-hover:inline-block peer-focus-visible:inline-block">
+                                    {isTrackedGame ? 'Untrack this game' : 'Track this game'}
+                                  </span>
                                 </div>
                               </div>
                               
@@ -668,7 +735,8 @@ export default function Home({ initialRegion = '' }) {
                              </div>
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
