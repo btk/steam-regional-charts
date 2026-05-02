@@ -169,6 +169,103 @@ export default function Home({ initialRegion = '' }) {
     return count.toString();
   };
 
+  const extractNumericValue = (value) => {
+    if (!value) return null;
+    const compact = value.replace(/\s+/g, '');
+    const numberMatch = compact.match(/-?[\d.,]+/);
+    if (!numberMatch) return null;
+
+    let numeric = numberMatch[0];
+    const hasComma = numeric.includes(',');
+    const hasDot = numeric.includes('.');
+
+    if (hasComma && hasDot) {
+      if (numeric.lastIndexOf(',') > numeric.lastIndexOf('.')) {
+        numeric = numeric.replace(/\./g, '').replace(',', '.');
+      } else {
+        numeric = numeric.replace(/,/g, '');
+      }
+    } else if (hasComma) {
+      numeric = /,\d{1,2}$/.test(numeric) ? numeric.replace(',', '.') : numeric.replace(/,/g, '');
+    }
+
+    const parsed = Number.parseFloat(numeric);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const extractPercentageValue = (value) => {
+    if (!value) return null;
+    const match = value.match(/-?\d+(\.\d+)?/);
+    if (!match) return null;
+    const parsed = Number.parseFloat(match[0]);
+    return Number.isFinite(parsed) ? Math.abs(parsed) : null;
+  };
+
+  const getMedian = (values) => {
+    if (!values.length) return null;
+    const sorted = [...values].sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) {
+      return (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+    return sorted[middle];
+  };
+
+  const getPriceAffixes = (value) => {
+    if (!value) return { prefix: '', suffix: '' };
+    const numberMatch = value.match(/-?[\d.,]+/);
+    if (!numberMatch || numberMatch.index == null) return { prefix: '', suffix: '' };
+    const start = numberMatch.index;
+    const end = start + numberMatch[0].length;
+    return {
+      prefix: value.slice(0, start).trim(),
+      suffix: value.slice(end).trim(),
+    };
+  };
+
+  const formatMedianPrice = (value, samplePrice) => {
+    if (value == null) return 'N/A';
+    const { prefix, suffix } = getPriceAffixes(samplePrice);
+    const formattedNumber = value.toLocaleString('en-US', {
+      minimumFractionDigits: value % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2,
+    });
+    if (prefix && suffix) return `${prefix}${formattedNumber} ${suffix}`;
+    if (prefix) return `${prefix}${formattedNumber}`;
+    if (suffix) return `${formattedNumber} ${suffix}`;
+    return formattedNumber;
+  };
+
+  const reviewSentimentScale = [
+    { label: 'Overwhelmingly Negative', score: 0 },
+    { label: 'Very Negative', score: 1 },
+    { label: 'Negative', score: 2 },
+    { label: 'Mostly Negative', score: 3 },
+    { label: 'Mixed', score: 4 },
+    { label: 'Mostly Positive', score: 5 },
+    { label: 'Positive', score: 6 },
+    { label: 'Very Positive', score: 7 },
+    { label: 'Overwhelmingly Positive', score: 8 },
+  ];
+
+  const getReviewSentimentScore = (sentiment) => {
+    if (!sentiment) return null;
+    const lower = sentiment.toLowerCase();
+    const matched = reviewSentimentScale.find((entry) => lower.includes(entry.label.toLowerCase()));
+    return matched ? matched.score : null;
+  };
+
+  const getClosestReviewSentimentLabel = (score) => {
+    if (score == null) return 'N/A';
+    const closest = reviewSentimentScale.reduce((best, entry) => {
+      if (!best) return entry;
+      const diff = Math.abs(entry.score - score);
+      const bestDiff = Math.abs(best.score - score);
+      return diff < bestDiff ? entry : best;
+    }, null);
+    return closest ? closest.label : 'N/A';
+  };
+
   const routeRegionCode = initialRegion?.trim().toLowerCase();
   const hasRouteRegion = Boolean(routeRegionCode && routeRegionCode !== DEFAULT_REGION);
   const seoRegionName = hasRouteRegion
@@ -183,6 +280,77 @@ export default function Home({ initialRegion = '' }) {
   const seoCanonicalUrl = hasRouteRegion
     ? `https://steampeek.net/region/${routeRegionCode}/`
     : 'https://steampeek.net';
+
+  const fullPriceEntries = games
+    .filter((game) => !game.isFree)
+    .map((game) => {
+      const fullPriceText = game.originalPrice || game.price;
+      return {
+        numericValue: extractNumericValue(fullPriceText),
+        rawValue: fullPriceText,
+      };
+    })
+    .filter((entry) => entry.numericValue != null);
+
+  const medianFullPriceValue = getMedian(fullPriceEntries.map((entry) => entry.numericValue));
+  const medianFullPriceSample = fullPriceEntries[0]?.rawValue || '';
+  const medianFullPriceText = formatMedianPrice(medianFullPriceValue, medianFullPriceSample);
+
+  const medianDiscountValue = getMedian(
+    games
+      .map((game) => extractPercentageValue(game.discountPercent))
+      .filter((value) => value != null)
+  );
+  const medianDiscountText = medianDiscountValue == null
+    ? 'N/A'
+    : `${medianDiscountValue.toLocaleString('en-US', {
+      minimumFractionDigits: medianDiscountValue % 1 === 0 ? 0 : 1,
+      maximumFractionDigits: 1,
+    })}%`;
+
+  const medianReviewAmountValue = getMedian(
+    games
+      .map((game) => {
+        if (typeof game.reviewCount === 'number') return game.reviewCount;
+        if (typeof game.reviewCount === 'string') return extractNumericValue(game.reviewCount);
+        return null;
+      })
+      .filter((value) => value != null)
+  );
+  const medianReviewAmountText = medianReviewAmountValue == null
+    ? 'N/A'
+    : Math.floor(medianReviewAmountValue).toLocaleString('en-US');
+
+  const medianReviewRatingValue = getMedian(
+    games
+      .map((game) => getReviewSentimentScore(game.reviewSentiment))
+      .filter((value) => value != null)
+  );
+  const medianReviewRatingText = getClosestReviewSentimentLabel(medianReviewRatingValue);
+  const medianReviewRatingColor = medianReviewRatingText === 'N/A'
+    ? 'text-gray-400'
+    : getReviewColor(medianReviewRatingText);
+  const titleStats = games
+    .map((game) => {
+      const title = game.title?.trim();
+      if (!title) return null;
+      return {
+        charCount: title.length,
+        wordCount: title.split(/\s+/).length,
+      };
+    })
+    .filter((entry) => entry != null);
+
+  const formatMedianCount = (value) => {
+    if (value == null) return 'N/A';
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: value % 1 === 0 ? 0 : 1,
+      maximumFractionDigits: 1,
+    });
+  };
+
+  const medianTitleCharacterText = formatMedianCount(getMedian(titleStats.map((entry) => entry.charCount)));
+  const medianTitleWordText = formatMedianCount(getMedian(titleStats.map((entry) => entry.wordCount)));
 
   return (
     <>
@@ -519,6 +687,42 @@ export default function Home({ initialRegion = '' }) {
             )}
           </div>
         </div>
+
+        <section className="w-full flex justify-center px-8 pb-12 pt-8 md:px-10 md:pb-14 md:pt-10">
+          <div className="mx-auto w-full max-w-4xl">
+            <div className="overflow-hidden border border-gray-800/60 bg-gray-900/20 shadow-2xl backdrop-blur-sm">
+              <div className="border-b border-gray-800/60 bg-gray-900/40 px-5 py-3 text-center md:px-6 md:py-4" style={{ marginTop: '30px',marginBottom: '20px' }}>
+                <h2 className="text-base font-semibold tracking-tight text-gray-100 md:text-lg">New & Trending Game Stats</h2>
+              </div>
+              <div className="grid grid-cols-1 gap-3 p-4 sm:gap-4 sm:p-5 md:grid-cols-3 md:p-6">
+                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
+                  <div className="text-[11px] tracking-wide text-gray-500">Median full price</div>
+                  <div className="mt-1.5 text-2xl font-semibold leading-none text-cyan-300">{medianFullPriceText}</div>
+                </div>
+                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
+                  <div className="text-[11px] tracking-wide text-gray-500">Median release discount</div>
+                  <div className="mt-1.5 text-2xl font-semibold leading-none text-purple-300">{medianDiscountText}</div>
+                </div>
+                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
+                  <div className="text-[11px] tracking-wide text-gray-500">Median review amount</div>
+                  <div className="mt-1.5 text-2xl font-semibold leading-none text-amber-300">{medianReviewAmountText}</div>
+                </div>
+                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
+                  <div className="text-[11px] tracking-wide text-gray-500">Median review rating</div>
+                  <div className={`mt-1.5 text-2xl font-semibold leading-none ${medianReviewRatingColor}`}>{medianReviewRatingText}</div>
+                </div>
+                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
+                  <div className="text-[11px] tracking-wide text-gray-500">Median game title character amount</div>
+                  <div className="mt-1.5 text-2xl font-semibold leading-none text-gray-100">{medianTitleCharacterText}</div>
+                </div>
+                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
+                  <div className="text-[11px] tracking-wide text-gray-500">Median game title word amount</div>
+                  <div className="mt-1.5 text-2xl font-semibold leading-none text-gray-100">{medianTitleWordText}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Footer */}
         <footer className="bg-gradient-to-r from-gray-900/50 to-black border-t border-gray-800/60 py-12 mt-16" style={{ marginTop: '20px', paddingTop: '20px', paddingBottom: '30px' }}>

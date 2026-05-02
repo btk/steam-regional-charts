@@ -10,14 +10,25 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  min-height: 100%;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #000000;
+}
+
+html {
+  height: 100%;
+}
+
+#__next {
+  min-height: 100%;
+  background-color: #000000;
 }
 
 body {
   color: white;
-  background: linear-gradient(to bottom, #111827, #000000, #111827);
+  background-color: #000000;
   padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
 }
 
