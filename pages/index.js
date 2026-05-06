@@ -569,7 +569,7 @@ export default function Home({ initialRegion = '' }) {
                   </div>
                 </div>
                 
-                <div className="mx-auto mb-12 mt-14 w-full max-w-5xl overflow-hidden border border-gray-800/60 bg-gray-900/30 pt-3 shadow-2xl backdrop-blur-sm md:mt-20 md:pt-4">
+                <div className="mx-auto mb-12 mt-14 w-full max-w-5xl overflow-hidden rounded-xl border border-gray-800/60 bg-gray-900/30 pt-5 shadow-2xl backdrop-blur-sm md:mt-20 md:pt-6">
                   {/* Horizontal Scroll Wrapper — min width locked with grid below */}
                   <div className="overflow-x-auto">
                     <div className="min-w-[970px]">
@@ -594,7 +594,7 @@ export default function Home({ initialRegion = '' }) {
                           return (
                           <div
                             key={game.id || game.rank}
-                            className={`px-8 py-3 transition-all duration-200 group md:px-6 ${isTrackedGame ? 'bg-green-900/15 hover:bg-green-900/25' : 'hover:bg-gray-800/30'}`}
+                            className={`px-8 py-4 transition-all duration-200 group md:px-6 ${isTrackedGame ? 'bg-green-900/15 hover:bg-green-900/25' : 'hover:bg-gray-800/30'}`}
                           >
                             <div className="grid grid-cols-[44px_128px_minmax(120px,0.95fr)_96px_128px_80px_40px_56px] gap-x-3 items-center">
                               {/* Rank */}
@@ -757,35 +757,49 @@ export default function Home({ initialRegion = '' }) {
         </div>
 
         <section className="w-full flex justify-center px-8 pb-12 pt-8 md:px-10 md:pb-14 md:pt-10">
-          <div className="mx-auto w-full max-w-4xl">
-            <div className="overflow-hidden border border-gray-800/60 bg-gray-900/20 shadow-2xl backdrop-blur-sm">
-              <div className="border-b border-gray-800/60 bg-gray-900/40 px-5 py-3 text-center md:px-6 md:py-4" style={{ marginTop: '30px',marginBottom: '20px' }}>
-                <h2 className="text-base font-semibold tracking-tight text-gray-100 md:text-lg">New & Trending Game Stats</h2>
-              </div>
-              <div className="grid grid-cols-1 gap-3 p-4 sm:gap-4 sm:p-5 md:grid-cols-3 md:p-6">
-                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
-                  <div className="text-[11px] tracking-wide text-gray-500">Median full price</div>
-                  <div className="mt-1.5 text-2xl font-semibold leading-none text-cyan-300">{medianFullPriceText}</div>
+          <div className="mx-auto w-full max-w-4xl py-3 md:py-5">
+            <div className="overflow-hidden rounded-xl border border-gray-800/60 bg-gray-900/20 shadow-2xl backdrop-blur-sm" style={{marginTop:10}}>
+              <div className="p-6 sm:p-8 md:p-10">
+                <div className="border-b border-gray-800/60 bg-gray-900/30 pb-4 text-center md:pb-5">
+                  <h2 className="text-base font-semibold tracking-tight text-gray-100 md:text-lg" style={{ marginTop: '10px', marginBottom: '10px' }}>New & Trending Game Stats</h2>
                 </div>
-                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
-                  <div className="text-[11px] tracking-wide text-gray-500">Median release discount</div>
-                  <div className="mt-1.5 text-2xl font-semibold leading-none text-purple-300">{medianDiscountText}</div>
-                </div>
-                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
-                  <div className="text-[11px] tracking-wide text-gray-500">Median review amount</div>
-                  <div className="mt-1.5 text-2xl font-semibold leading-none text-amber-300">{medianReviewAmountText}</div>
-                </div>
-                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
-                  <div className="text-[11px] tracking-wide text-gray-500">Median review rating</div>
-                  <div className={`mt-1.5 text-2xl font-semibold leading-none ${medianReviewRatingColor}`}>{medianReviewRatingText}</div>
-                </div>
-                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
-                  <div className="text-[11px] tracking-wide text-gray-500">Median game title character amount</div>
-                  <div className="mt-1.5 text-2xl font-semibold leading-none text-gray-100">{medianTitleCharacterText}</div>
-                </div>
-                <div className="rounded-lg border border-gray-800/60 bg-black/25 px-4 py-4 text-center">
-                  <div className="text-[11px] tracking-wide text-gray-500">Median game title word amount</div>
-                  <div className="mt-1.5 text-2xl font-semibold leading-none text-gray-100">{medianTitleWordText}</div>
+                <div className="grid grid-cols-1 gap-4 p-2.5 md:grid-cols-3" style={{padding: '15px'}}>
+                  <div className="p-0">
+                    <div className="rounded-lg bg-black/25 px-5 py-5 text-center sm:px-6 sm:py-6">
+                      <div className="text-[11px] tracking-wide text-gray-500">Median full price</div>
+                      <div className="mt-1.5 text-2xl font-semibold leading-none text-cyan-300">{medianFullPriceText}</div>
+                    </div>
+                  </div>
+                  <div className="p-0">
+                    <div className="rounded-lg bg-black/25 px-5 py-5 text-center sm:px-6 sm:py-6">
+                      <div className="text-[11px] tracking-wide text-gray-500">Median release discount</div>
+                      <div className="mt-1.5 text-2xl font-semibold leading-none text-purple-300">{medianDiscountText}</div>
+                    </div>
+                  </div>
+                  <div className="p-0">
+                    <div className="rounded-lg bg-black/25 px-5 py-5 text-center sm:px-6 sm:py-6">
+                      <div className="text-[11px] tracking-wide text-gray-500">Median review amount</div>
+                      <div className="mt-1.5 text-2xl font-semibold leading-none text-amber-300">{medianReviewAmountText}</div>
+                    </div>
+                  </div>
+                  <div className="p-0">
+                    <div className="rounded-lg bg-black/25 px-5 py-5 text-center sm:px-6 sm:py-6">
+                      <div className="text-[11px] tracking-wide text-gray-500">Median review rating</div>
+                      <div className={`mt-1.5 text-2xl font-semibold leading-none ${medianReviewRatingColor}`}>{medianReviewRatingText}</div>
+                    </div>
+                  </div>
+                  <div className="p-0">
+                    <div className="rounded-lg bg-black/25 px-5 py-5 text-center sm:px-6 sm:py-6">
+                      <div className="text-[11px] tracking-wide text-gray-500">Median game title character amount</div>
+                      <div className="mt-1.5 text-2xl font-semibold leading-none text-gray-100">{medianTitleCharacterText}</div>
+                    </div>
+                  </div>
+                  <div className="p-0">
+                    <div className="rounded-lg bg-black/25 px-5 py-5 text-center sm:px-6 sm:py-6">
+                      <div className="text-[11px] tracking-wide text-gray-500">Median game title word amount</div>
+                      <div className="mt-1.5 text-2xl font-semibold leading-none text-gray-100">{medianTitleWordText}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -798,7 +812,7 @@ export default function Home({ initialRegion = '' }) {
             <div className="mx-auto w-full max-w-4xl px-8 md:px-10">
               <div className="mx-4 flex flex-col items-center space-y-4 px-4 text-center md:mx-6 md:px-6">
                 <div className="inline-flex items-center gap-2 rounded-lg border border-purple-800/40 bg-purple-900/20 px-4 py-2 text-sm backdrop-blur">
-                  <div className="ml-1 h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                  <div className="ml-1 h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" style={{ marginLeft: '10px' }}></div>
                   <span className="text-gray-400">Live region based data by</span>
                   <a 
                     href="https://steampeek.net" 
